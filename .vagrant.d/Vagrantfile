@@ -1,0 +1,29 @@
+require 'optparse' # for temporarily disable shared folders (until guest box additins are instaled)
+
+options = {
+	sharedFolders: true,
+}
+optParser = OptionParser.new do |opts|
+	opts.on("--[no-]shared-folders", "Share folders") do |a|
+		options[:sharedFolders] = a
+	end
+end
+begin optParser.parse!
+rescue OptionParser::InvalidOption => e
+end
+
+
+_VAGRANTFILE_API_VERSION = "2"
+Vagrant.configure(_VAGRANTFILE_API_VERSION) do |config|
+	config.vm.provider "virtualbox" do |vb|
+		#vb.customize ["modifyvm", :id, "--cpus", "1"]
+		vb.customize ["modifyvm", :id, "--cpuhotplug", "on", "--cpus", "3"]
+		vb.customize ["modifyvm", :id, "--memory", "1024"]
+		if options[:sharedFolders]
+			config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+		end
+	end
+	if options[:sharedFolders]
+		config.vm.synced_folder "..", "/projects"
+	end
+end
